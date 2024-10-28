@@ -1,0 +1,129 @@
+from constraint import Problem, AllDifferentConstraint
+
+
+# Ici, c'est l'application directe de ce qui a été demandé, 
+# en veillant simplement à ce que toutes les colonnes soient différentes et uniques. 
+# Il est important de considérer que "à gauche" désigne l'élément au-dessus, 
+# "à droite" l'élément en dessous, et que les expressions telles que 
+# "directement" ou "exactement" signifient que les éléments doivent être collés l'un à l'autre.
+
+
+problem = Problem()
+
+# Variáveis e seus domínios
+positions = [1, 2, 3, 4, 5]  
+names = ["Joey", "Ross", "Monica", "Rachel", "Phoebe"]
+tshirts = ["noir", "bleu", "vert", "rouge", "blanc"]
+ages = ["21", "22", "23", "24", "25"]
+juices = ["pomme", "pêche", "raisin", "citron", "orange"]
+discounts = ["-40", "-50", "-60", "-70", "-80"]
+items = ["rasoir", "console", "ordinateur", "smartphone", "tele"]
+
+problem.addVariables(names, positions)
+problem.addVariables(tshirts, positions)
+problem.addVariables(ages, positions)
+problem.addVariables(juices, positions)
+problem.addVariables(discounts, positions)
+problem.addVariables(items, positions)
+
+problem.addConstraint(AllDifferentConstraint(), names)
+problem.addConstraint(AllDifferentConstraint(), tshirts)
+problem.addConstraint(AllDifferentConstraint(), ages)
+problem.addConstraint(AllDifferentConstraint(), juices)
+problem.addConstraint(AllDifferentConstraint(), discounts)
+problem.addConstraint(AllDifferentConstraint(), items)
+
+# Restrições específicas
+
+# 1. L’élève qui buvait du jus d’orange était directement à droite de l’élève qui a obtenu une remise de 70%.
+problem.addConstraint(lambda orange, discount_70: orange == discount_70 + 1, ["orange", "-70"])
+
+# 2. Rachel a 25 ans.
+problem.addConstraint(lambda rachel, age_25: rachel == age_25, ["Rachel", "25"])
+
+# 3. L’élève qui a acheté une télé est directement à gauche de l’élève qui portait un t-shirt rouge.
+problem.addConstraint(lambda tele, rouge: tele == rouge - 1, ["tele", "rouge"])
+
+# 4. L’élève qui est au milieu a obtenu une réduction de 50%.
+problem.addConstraint(lambda discount_50: discount_50 == 3, ["-50"])
+
+# 5. Rachel est juste à côté de l’élève qui portait un t-shirt blanc.
+problem.addConstraint(lambda rachel, blanc: abs(rachel - blanc) == 1, ["Rachel", "blanc"])
+
+# 6. L’élève qui a 21 ans est quelque part entre l’élève qui a 23 ans et l’élève qui a 24 ans (dans cet ordre).
+problem.addConstraint(lambda age_21, age_23, age_24: age_23 < age_21 < age_24, ["21", "23", "24"])
+
+# 7. L’élève qui a bu du jus de pomme a acheté un smartphone.
+problem.addConstraint(lambda pomme, smartphone: pomme == smartphone, ["pomme", "smartphone"])
+
+# 8. L’élève qui a 22 ans est immédiatement à gauche de l’élève qui a acheté le rasoir.
+problem.addConstraint(lambda age_22, rasoir: age_22 == rasoir - 1, ["22", "rasoir"])
+
+# 9. Phoebe est la plus jeune.
+problem.addConstraint(lambda phoebe, age_21: phoebe == age_21, ["Phoebe", "21"])
+
+# 10. L’élève qui a eu 40% de remise est exactement à droite de l’élève qui a acheté le rasoir.
+problem.addConstraint(lambda discount_40, rasoir: discount_40 == rasoir + 1, ["-40", "rasoir"])
+
+# 11. Ross a 24 ans.
+problem.addConstraint(lambda ross, age_24: ross == age_24, ["Ross", "24"])
+
+# 12. Phoebe portait un t-shirt noir.
+problem.addConstraint(lambda phoebe, tshirt_noir: phoebe == tshirt_noir, ["Phoebe", "noir"])
+
+# 13. L’avant dernier élève a eu la plus grosse remise.
+problem.addConstraint(lambda discount_80: discount_80 == 4, ["-80"])
+
+# 14. Joey a eu une réduction de 60%.
+problem.addConstraint(lambda joey, discount_60: joey == discount_60, ["Joey", "-60"])
+
+# 15. L’élève qui buvait du jus de citron est exactement à droite de l’élève qui buvait du jus de raisin.
+problem.addConstraint(lambda citron, raisin: citron == raisin + 1, ["citron", "raisin"])
+
+# 16. Rachel a acheté une console de jeux.
+problem.addConstraint(lambda rachel, console: rachel == console, ["Rachel", "console"])
+
+# 17. L’élève qui a eu 80% de réduction est exacement à gauche de l’élève qui portait un t-shirt bleu.
+problem.addConstraint(lambda discount_80, bleu: discount_80 == bleu - 1, ["-80", "bleu"])
+
+# 18. L’élève qui buvait du jus de raisin a acheté un rasoir électrique.
+problem.addConstraint(lambda raisin, rasoir: raisin == rasoir, ["raisin", "rasoir"])
+
+# 19. L’élève qui portait un t-shirt noir est quelque part à droite de Rachel.
+problem.addConstraint(lambda noir, rachel: noir > rachel, ["noir", "Rachel"])
+
+# 20. L’élève qui a acheté le smartphone est à côté de l’élève qui portait un t-shirt noir.
+problem.addConstraint(lambda noir, smartphone: abs(noir - smartphone) == 1, ["noir", "smartphone"])
+
+# Solution, show lenght to confirm is unique
+solutions = problem.getSolutions()
+print(len(solutions))
+# If exist, plot in a beatiful table
+if solutions:
+    solution = solutions[0]  # Garantee to take the first, but not necessary
+
+    # Table organization
+    table = []
+    for pos in positions:
+        row = {
+            "Names": next(name for name in names if solution[name] == pos),
+            "T-shirt": next(color for color in tshirts if solution[color] == pos),
+            "Age": next(age for age in ages if solution[age] == pos),
+            "juices": next(juice for juice in juices if solution[juice] == pos),
+            "Discount": next(discount for discount in discounts if solution[discount] == pos),
+            "Item": next(item for item in items if solution[item] == pos)
+        }
+        table.append(row)
+
+    # prints of table
+    print("\nTable of solution:")
+    print(f"{'Posição':<10}{'Names':<10}{'T-shirt':<10}{'Age':<10}{'juices':<10}{'Discount':<10}{'Item'}")
+    print("-" * 60)
+    for pos, row in enumerate(table, start=1):
+        print(f"{pos:<10}{row['Names']:<10}{row['T-shirt']:<10}{row['Age']:<10}{row['juices']:<10}{row['Discount']:<10}{row['Item']}")
+
+    # show tv buyer
+    tv_buyer = next(row['Names'] for row in table if row['Item'] == 'tele')
+    print(f"\nThe person that bought a TV is : {tv_buyer}")
+else:
+    print("Solution not found")
